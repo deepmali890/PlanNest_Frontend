@@ -8,6 +8,8 @@ import { Button } from './ui/button'
 import { Link, useNavigate } from "react-router-dom"
 import axiosInstance from '@/lib/axios'
 import toast from 'react-hot-toast'
+import { setUserData } from '@/redux/user.slice'
+import { useDispatch } from 'react-redux'
 
 const Login = () => {
     const [formData, setFormData] = useState({ email: "", password: "" })
@@ -16,6 +18,8 @@ const Login = () => {
 
 
     const navigate = useNavigate()
+    const dispatch = useDispatch()
+
 
 
 
@@ -31,6 +35,7 @@ const Login = () => {
             const res = await axiosInstance.post("/api/auth/login", formData)
             if (res.data?.success) {
                 toast.success(res.data?.message || "Login successful!")
+                dispatch(setUserData(res.data.user))
                 navigate("/")
             } else {
                 toast.error(res.data?.message || "Login failed!")

@@ -8,11 +8,15 @@ import { Button } from "./ui/button"
 import { Link, useNavigate } from "react-router-dom"
 import axiosInstance from "@/lib/axios"
 import toast from "react-hot-toast"
+import { useDispatch } from "react-redux"
+import { setUserData } from "@/redux/user.slice"
 
 const Register = () => {
   const [formData, setFormData] = useState({ name: "", email: "", password: "" })
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+
+  // const dispatch = useDispatch()
 
   const navigate = useNavigate()
 
@@ -26,9 +30,10 @@ const Register = () => {
 
     try {
       const res = await axiosInstance.post("/api/auth/register", formData)
-      console.log("Register response:", res.data);
+      
       if (res.data?.success) {
         toast.success(res.data?.message || "Registration successful!")
+        // dispatch(setUserData(res.data?.user))
         navigate("/login")
       } else {
         toast.error(res.data?.message || "Registration failed!")

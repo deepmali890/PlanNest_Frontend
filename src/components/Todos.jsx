@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Input } from "./ui/input";
-import { CheckCircle, Edit, Plus, Trash2, Save, X, User } from "lucide-react";
+import { CheckCircle, Edit, Plus, Trash2, Save, X, User, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { motion } from "framer-motion";
 import axiosInstance from "@/lib/axios";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { clearUserData } from "@/redux/user.slice";
+import { useNavigate } from "react-router-dom";
 
 const Todos = () => {
     const [tasks, setTasks] = useState([]);
@@ -13,6 +16,12 @@ const Todos = () => {
     const [editingTask, setEditingTask] = useState(null);
     const [editTitle, setEditTitle] = useState("");
     const [editDescription, setEditDescription] = useState("");
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
+    const { userData } = useSelector((state) => state.user);
+
 
     const fetchTasks = async () => {
         try {
@@ -46,6 +55,20 @@ const Todos = () => {
         } catch (err) {
             console.error(err);
             toast.error("Error adding task");
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            const res = await axiosInstance.post("/api/auth/logout");
+            if (res.data?.success) {
+                dispatch(clearUserData());
+                toast.success(res.data.message || "Logout successful!");
+                navigate("/login");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.message || "Something went wrong!");
         }
     };
 
@@ -113,13 +136,62 @@ const Todos = () => {
             <div className="absolute inset-0 backdrop-blur-md"></div>
 
             {/* Header */}
-            <header className="relative z-20 flex justify-center text-center shadow-xl px-10 rounded-b-md md:flex-row  items-start md:items-center mb-6 gap-4 md:gap-0">
-                <div className="flex items-center gap-2">
-                    <img src="/logo.png" alt="logo" className="w-20 h-20" />
-                   
+            <header className="relative z-20 shadow-2xl mb-10 rounded-b-xl px-6 md:px-10 py-4 flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 bg-white/80 backdrop-blur-md">
+                {/* Logo + Title */}
+                <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
+                    <img
+                        src="/logo.png"
+                        alt="logo"
+                        className="w-16 h-16 md:w-20 md:h-20 object-contain"
+                    />
+                    <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-[#113d6a] truncate">
+                        PlanNest Todo
+                    </h1>
                 </div>
-              
+
+                {/* User Circle + Dropdown */}
+                <div className="relative flex justify-end w-full md:w-auto mt-2 md:mt-0">
+                    {userData && userData.name ? (
+                        <>
+                            <button
+                                onClick={() => setDropdownOpen(!dropdownOpen)}
+                                className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-gradient-to-tr from-[#113d6a] to-[#5e60ce] text-white rounded-full font-bold text-lg md:text-xl uppercase transition-transform transform hover:scale-110 focus:outline-none"
+                            >
+                                {userData.name[0]}
+                            </button>
+
+                            {/* Dropdown */}
+                            {dropdownOpen && (
+                                <div className="absolute right-0 mt-10 w-48 bg-white shadow-lg rounded-lg py-2 border border-gray-200 z-50 animate-fadeIn">
+                                    <div className="px-4 py-2 text-gray-700 font-medium border-b border-gray-200 truncate">
+                                        {userData.name}
+                                    </div>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full text-left px-4 py-2 text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                    >
+                                        <LogOut size={16} /> Logout
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <User size={28} className="text-[#113d6a]" />
+                    )}
+                </div>
             </header>
+
+            {/* Tailwind fade-in animation */}
+            <style jsx>{`
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+`}</style>
+
 
             {/* Add Task */}
             <motion.div
@@ -142,9 +214,9 @@ const Todos = () => {
                     />
                     <Button
                         type="submit"
-                        className="bg-gradient-to-r from-[#113d6a] to-[#5e60ce] hover:opacity-90 text-white rounded-xl px-6"
+                        className="bg-gradient-to-r cursor-pointer from-[#113d6a] to-[#5e60ce] hover:opacity-90 text-white rounded-xl px-6"
                     >
-                        <Plus size={18} className="mr-1" /> Add
+                        <Plus size={18} className="mr-1 " /> Add
                     </Button>
                 </form>
             </motion.div>
